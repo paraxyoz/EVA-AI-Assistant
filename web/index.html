@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA AI — Персональный 3D ИИ-Ассистент</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Local Offline ImportMap for Three.js & @pixiv/three-vrm -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "/static/vendor/three/three.module.js",
+            "three/addons/loaders/GLTFLoader.js": "/static/vendor/three/GLTFLoader.js",
+            "three/addons/controls/OrbitControls.js": "/static/vendor/three/OrbitControls.js",
+            "three/addons/utils/BufferGeometryUtils.js": "/static/vendor/utils/BufferGeometryUtils.js",
+            "@pixiv/three-vrm": "/static/vendor/vrm/three-vrm.module.min.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div class="cyber-bg"></div>
+
+    <div id="app-container">
+        <!-- 3D VRM Canvas Viewport -->
+        <div id="canvas-container"></div>
+
+        <!-- Floating Button to Exit Overlay Mode -->
+        <button class="exit-overlay-btn" id="btn-exit-overlay" title="Вернуть полный интерфейс (Esc)">
+            🪟 Вернуть интерфейс (Esc)
+        </button>
+
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="brand">
+                <div class="brand-icon">✨</div>
+                <div>
+                    <h1 class="brand-title">EVA AI</h1>
+                </div>
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span id="agent-status-text">ONLINE</span>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn-glass" id="btn-camera-portrait">🎯 Лицо</button>
+                <button class="btn-glass" id="btn-camera-bust">👤 Бюст</button>
+                <button class="btn-glass" id="btn-camera-full">🧍 Полный рост</button>
+                <button class="btn-glass" id="btn-toggle-overlay">🪟 Оверлей</button>
+                <button class="btn-glass" id="btn-open-settings">⚙️ Настройки</button>
+            </div>
+        </header>
+
+        <!-- Live Chat & Transcript Overlay -->
+        <div class="chat-overlay" id="chat-stream">
+            <div class="chat-bubble bubble-assistant">
+                <div class="bubble-sender">EVA AI</div>
+                <div>Приветик! Я Ева — твоя живая 3D-девушка и персональный ассистент. Я могу двигаться, садиться, танцевать, менять одежду и управлять твоим ПК!</div>
+            </div>
+        </div>
+
+        <!-- Bottom Control Dock -->
+        <div class="bottom-dock">
+            <div class="dock-top-row">
+                <div class="visualizer-box">
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">AUDIO FFT:</span>
+                    <canvas id="visualizer-canvas" width="140" height="32"></canvas>
+                </div>
+
+                <div class="quick-chips">
+                    <div class="chip" data-cmd="Сядь">🪑 Сядь</div>
+                    <div class="chip" data-cmd="Встань">🧍‍♀️ Встань</div>
+                    <div class="chip" data-cmd="Подними руку">🙋‍♀️ Подними руку</div>
+                    <div class="chip" data-cmd="Потанцуй">💃 Потанцуй</div>
+                    <div class="chip" data-cmd="Покрутись">🔄 Покрутись</div>
+                    <div class="chip" data-cmd="Поменяй одежду">👗 Поменяй одежду</div>
+                    <div class="chip" data-cmd="Надень купальник">👙 Купальник</div>
+                    <div class="chip" data-cmd="Раздеться">🔥 Без одежды</div>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <button class="mic-btn" id="btn-mic-toggle" title="Нажмите для голосового ввода">
+                    🎙️
+                </button>
+                <input 
+                    type="text" 
+                    class="text-input" 
+                    id="user-input-text" 
+                    placeholder="Скажите в микрофон или напишите любую команду..." 
+                    autocomplete="off"
+                />
+                <button class="send-btn" id="btn-send-text">ОТПРАВИТЬ</button>
+            </div>
+        </div>
+
+        <!-- Settings Slide-out Drawer -->
+        <aside class="settings-drawer" id="settings-drawer">
+            <div class="drawer-header">
+                <h2 class="drawer-title">👑 Настройки EVA AI</h2>
+                <button class="close-btn" id="btn-close-settings">✕</button>
+            </div>
+
+            <!-- AI Engine / LLM Provider & Local Models -->
+            <div class="setting-section">
+                <label class="section-label">🧠 ИИ-Модель & Локальные нейросети</label>
+                <div class="setting-row">
+                    <span style="font-size: 11px; color: var(--text-secondary);">Провайдер (Облако или Локальный ПК):</span>
+                    <select class="setting-select" id="select-llm-provider">
+                        <option value="eva_free">✨ EVA Cloud Free (Бесплатно, без API ключа)</option>
+                        <option value="gemini">🌐 Google Gemini (Облако)</option>
+                        <option value="lm_studio">💻 LM Studio (Локальная на ПК)</option>
+                        <option value="ollama">🦙 Ollama (Локальная на ПК)</option>
+                        <option value="openrouter">🚀 OpenRouter (300+ моделей)</option>
+                        <option value="groq">⚡ Groq (Сверхбыстрый Llama/DeepSeek)</option>
+                        <option value="openai">🤖 OpenAI (GPT-4o)</option>
+                        <option value="custom">🛠️ Свой локальный сервер (OpenAI API)</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <span style="font-size: 11px; color: var(--text-secondary);">Адрес сервера (API Base URL):</span>
+                    <input type="text" class="setting-input" id="cfg-llm-base" placeholder="http://localhost:1234/v1" />
+                </div>
+
+                <div class="setting-row">
+                    <span style="font-size: 11px; color: var(--text-secondary);">API Ключ (для локальных и EVA Cloud не нужен):</span>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="password" class="setting-input" id="cfg-llm-key" placeholder="Введите API ключ (или оставьте пустым для EVA Cloud)..." />
+                        <button class="btn-glass" id="btn-toggle-key-vis" title="Показать/Скрыть ключ" style="padding: 0 12px;">👁️</button>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <span style="font-size: 11px; color: var(--text-secondary);">Название модели (можно выбрать или вписать):</span>
+                    <input type="text" class="setting-input" id="cfg-llm-model" list="llm-models-datalist" placeholder="Например: openai, qwen2.5-7b-instruct или gemini-2.5-flash" />
+                    <datalist id="llm-models-datalist"></datalist>
+                </div>
+
+                <button class="btn-glass" id="btn-test-llm" style="width: 100%; justify-content: center; font-size: 12px; margin-top: 2px;">
+                    🔍 Проверить связь & Найти локальные модели
+                </button>
+                <div id="llm-test-status" style="font-size: 11px; color: var(--neon-cyan); display: none; padding: 4px 2px;"></div>
+            </div>
+
+            <!-- Model Management -->
+            <div class="setting-section">
+                <label class="section-label">3D VRM Модель аватара</label>
+                <select class="setting-select" id="select-vrm-model">
+                    <option value="alicia.vrm">Alicia Solid (Anime VRM)</option>
+                    <option value="sample_vrm1.vrm">VRM1 Twist Sample</option>
+                </select>
+
+                <div class="drop-zone" id="vrm-drop-zone">
+                    <div style="font-size: 24px; margin-bottom: 6px;">📂</div>
+                    <div style="font-size: 13px; font-weight: 600;">Перетащите ваш .vrm файл сюда</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Загружайте любые аватары из VRoid Hub / Booth</div>
+                    <input type="file" id="vrm-file-input" accept=".vrm" style="display: none;" />
+                </div>
+            </div>
+
+            <!-- Camera Presets -->
+            <div class="setting-section">
+                <label class="section-label">Ракурс камеры</label>
+                <div class="camera-presets">
+                    <button class="cam-btn" data-cam="portrait">Лицо</button>
+                    <button class="cam-btn" data-cam="bust">Бюст</button>
+                    <button class="cam-btn" data-cam="waist">Пояс</button>
+                    <button class="cam-btn" data-cam="full">Тело</button>
+                </div>
+            </div>
+
+            <!-- 3D Avatar Poses & Animations -->
+            <div class="setting-section">
+                <label class="section-label">💃 Позы и движения 3D-аватара</label>
+                <div class="camera-presets" style="grid-template-columns: repeat(3, 1fr);">
+                    <button class="cam-btn" data-pose="stand">🧍‍♀️ Стоять</button>
+                    <button class="cam-btn" data-pose="sit">🪑 Сесть</button>
+                    <button class="cam-btn" data-pose="raise_hand">🙋‍♀️ Рука</button>
+                    <button class="cam-btn" data-pose="hands_up">🙌 Вверх</button>
+                    <button class="cam-btn" data-pose="dance">💃 Танец</button>
+                    <button class="cam-btn" data-pose="spin">🔄 Оборот</button>
+                    <button class="cam-btn" data-pose="lean">😘 Ближе</button>
+                    <button class="cam-btn" data-pose="pose_model">✨ Поза</button>
+                    <button class="cam-btn" data-pose="shy">😳 Смущение</button>
+                </div>
+            </div>
+
+            <!-- 3D Avatar Wardrobe & Outfits -->
+            <div class="setting-section">
+                <label class="section-label">👗 Гардероб и одежда 3D-аватара</label>
+                <div class="camera-presets" style="grid-template-columns: repeat(2, 1fr);">
+                    <button class="cam-btn" data-outfit="default">👚 Обычная</button>
+                    <button class="cam-btn" data-outfit="crimson_dress">💃 Красное платье</button>
+                    <button class="cam-btn" data-outfit="goth_black">🖤 Чёрный стиль</button>
+                    <button class="cam-btn" data-outfit="pink_glam">🌸 Розовый гламур</button>
+                    <button class="cam-btn" data-outfit="cyber_neon">⚡ Кибер-неон</button>
+                    <button class="cam-btn" data-outfit="white_gold">✨ Бело-золотой</button>
+                    <button class="cam-btn" data-outfit="bikini">👙 Купальник</button>
+                    <button class="cam-btn" data-outfit="undress">🔥 Без одежды</button>
+                </div>
+            </div>
+
+            <!-- Voice & ElevenLabs -->
+            <div class="setting-section">
+                <label class="section-label">Голосовой движок (TTS)</label>
+                <div class="setting-row">
+                    <select class="setting-select" id="select-voice-profile">
+                        <option value="elevenlabs">👑 ElevenLabs (Премиум / Клонированный голос)</option>
+                        <option value="aoede">🌟 Aoede — Ava Neural (Мягкий живой женский)</option>
+                        <option value="puck">⚡ Puck — Seraphina Neural (Яркий женский)</option>
+                        <option value="kore">🌸 Kore — Emma Neural (Нежный тёплый женский)</option>
+                        <option value="fenrir">🐺 Fenrir — Andrew Neural (Глубокий мужской)</option>
+                        <option value="charon">🦾 Charon — Brian Neural (Бархатный мужской)</option>
+                        <option value="google_female">🌐 Светлана Neural (Чёткий русский женский)</option>
+                        <option value="google_male">🌐 Дмитрий Neural (Чёткий русский мужской)</option>
+                    </select>
+                </div>
+
+                <div id="elevenlabs-settings" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+                    <input type="password" class="setting-input" id="cfg-eleven-key" placeholder="ElevenLabs API Key..." />
+                    <span style="font-size: 11px; color: var(--text-secondary);">Бесплатные голоса ElevenLabs (или свой ID ниже):</span>
+                    <select class="setting-select" id="select-eleven-preset">
+                        <option value="cgSgspJ2msm6clMCkdW9">✨ Jessica (Живой женский — Free API)</option>
+                        <option value="EXAVITQu4vr4xnSDxMaL">🌸 Sarah (Нежный женский — Free API)</option>
+                        <option value="pFZP5JQG7iQjIQuC4Bku">🎀 Lily (Бархатный женский — Free API)</option>
+                        <option value="Xb7hH8MSUJpSbSDYk0k2">👑 Alice (Уверенный женский — Free API)</option>
+                        <option value="FGY2WhTYpPnrIDTdsKH5">💫 Laura (Энергичный женский — Free API)</option>
+                        <option value="XrExE9yKIg1WjnnlVkGX">🌹 Matilda (Теплый женский — Free API)</option>
+                        <option value="SAz9YHcvj6GT2YYXdXww">🌊 River (Стильный нейтральный — Free API)</option>
+                        <option value="TX3LPaxmHKxFdv7VOQHJ">⚡ Liam (Молодой мужской — Free API)</option>
+                        <option value="nPczCjzI2devNBz1zQrb">🎙️ Brian (Глубокий мужской — Free API)</option>
+                        <option value="custom">🛠️ Свой Voice ID (для платной подписки)</option>
+                    </select>
+                    <input type="text" class="setting-input" id="cfg-eleven-voice-id" placeholder="Voice ID (например: cgSgspJ2msm6clMCkdW9)..." />
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-glass" id="btn-open-eleven-catalog" style="flex: 1; font-size: 11px;">🌐 Каталог 10k+ голосов</button>
+                        <button class="btn-glass" id="btn-test-voice-btn" style="flex: 1; font-size: 11px;">🔊 Тест звука</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry & System Status -->
+            <div class="setting-section">
+                <label class="section-label">Системные показатели ПК</label>
+                <div class="telemetry-card" id="telemetry-box">
+                    <div>💻 <b>ОС:</b> <span id="tele-os">Windows</span></div>
+                    <div>🧠 <b>CPU:</b> <span id="tele-cpu">Загрузка...</span></div>
+                    <div>🎮 <b>GPU:</b> <span id="tele-gpu">Загрузка...</span></div>
+                    <div>⚡ <b>RAM:</b> <span id="tele-ram">Загрузка...</span></div>
+                </div>
+            </div>
+
+            <button class="send-btn" id="btn-save-settings" style="margin-top: 10px;">💾 Сохранить настройки</button>
+        </aside>
+    </div>
+
+    <!-- Application Script Module -->
+    <script type="module" src="/static/app.js?v=2.5"></script>
+</body>
+</html>

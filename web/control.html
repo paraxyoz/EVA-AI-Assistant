@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA AI — Панель управления</title>
+    <style>
+        @font-face {
+            font-family: 'Tovar';
+            src: url('/static/fonts/Tovar.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            --bg-void: #0b0c10;
+            --bg-sidebar: #0e1017;
+            --bg-surface: #131620;
+            --bg-surface-elevated: #181c28;
+            --bg-surface-hover: #1e2333;
+            --bg-control: #151924;
+
+            --text-primary: #f3f4f8;
+            --text-secondary: #9ca3b5;
+            --text-muted: #646b80;
+            --text-inverse: #090a0f;
+
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-soft: rgba(99, 102, 241, 0.14);
+            --accent-border: rgba(99, 102, 241, 0.42);
+
+            --emerald: #10b981;
+            --emerald-soft: rgba(16, 185, 129, 0.14);
+            --amber: #f59e0b;
+            --amber-soft: rgba(245, 158, 11, 0.16);
+            --rose: #f43f5e;
+            --rose-soft: rgba(244, 63, 94, 0.16);
+
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-card: rgba(255, 255, 255, 0.09);
+            --border-hover: rgba(255, 255, 255, 0.18);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+
+            --font-display: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            --font-ui: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.26);
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .studio-layout {
+            display: grid;
+            grid-template-columns: 88px minmax(0, 1fr);
+            width: 100vw;
+            height: 100vh;
+            padding: 12px;
+            gap: 14px;
+            background: #111319;
+        }
+
+        /* ================= LEFT 6-SLOT SVG ICON RAIL (MATCHING SCREENSHOT) ================= */
+        .sidebar {
+            background: #1c1f2a;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 26px;
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            z-index: 100;
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+        }
+
+        .rail-logo-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.32), rgba(139, 92, 246, 0.2));
+            border: 1px solid var(--accent-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+            transition: all 0.2s var(--ease);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .rail-logo-btn:hover {
+            transform: scale(1.06);
+            border-color: #818cf8;
+            box-shadow: 0 8px 26px rgba(99, 102, 241, 0.45);
+        }
+
+        .rail-logo-btn svg {
+            width: 25px;
+            height: 25px;
+            stroke: #e0e7ff;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Middle 4 Section Buttons */
+        .rail-nav-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .rail-nav-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s var(--ease);
+            position: relative;
+        }
+
+        .rail-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .rail-nav-btn.active {
+            background: var(--accent);
+            border-color: rgba(255, 255, 255, 0.28);
+            color: #ffffff;
+            box-shadow: 0 8px 22px rgba(99, 102, 241, 0.45);
+        }
+
+        .rail-nav-btn svg {
+            width: 23px;
+            height: 23px;
+            stroke: currentColor;
+            stroke-width: 1.95;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Tooltip on hover */
+        .rail-nav-btn::after,
+        .rail-logo-btn::after,
+        .rail-action-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 68px;
+            background: rgba(19, 22, 32, 0.98);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--accent-border);
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 11px;
+            border-radius: 9px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.18s var(--ease);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+            z-index: 1000;
+        }
+
+        .rail-nav-btn:hover::after,
+        .rail-logo-btn:hover::after,
+        .rail-action-btn:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .rail-bottom-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .rail-action-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s var(--ease);
+            position: relative;
+        }
+
+        .rail-action-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.24);
+            transform: translateY(-1px);
+        }
+
+        .rail-action-btn svg {
+            width: 23px;
+            height: 23px;
+            stroke: currentColor;
+            stroke-width: 1.9;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .icon-btn.muted-red,
+        .action-btn.muted-red {
+            background: var(--rose-soft) !important;
+            border-color: rgba(244, 63, 94, 0.55) !important;
+            color: #fb7185 !important;
+        }
+
+        /* Legacy compatibility elements hidden cleanly */
+        .legacy-telemetry-stash {
+            display: none !important;
+        }
+
+        /* ================= MAIN STAGE ROUNDED WORKSPACE ================= */
+        .main-stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at 85% 10%, rgba(99, 102, 241, 0.07), transparent 45%), #161821;
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+        }
+
+        /* ================= COMMANDS PAGE (1:1 REFERENCE MOCKUP) ================= */
+        .commands-page-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            padding: 18px 22px 20px;
+            gap: 14px;
+            overflow: hidden;
+        }
+
+        .commands-page-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .commands-big-heading {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+
+        .commands-studio-wrapper {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 292px;
+            gap: 18px;
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Large rounded gray container matching user's screenshot */
+        .commands-tree-panel {
+            background: #222634;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 42px rgba(0, 0, 0, 0.35);
+        }
+
+        .commands-tree-header {
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(20, 23, 32, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .scope-switcher {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #141720;
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+        }
+
+        .scope-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-ui);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s var(--ease);
+        }
+
+        .scope-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .scope-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        }
+
+        .tree-search-bar {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+            max-width: 230px;
+        }
+
+        .tree-search-input {
+            width: 100%;
+            height: 34px;
+            padding: 0 12px 0 32px;
+            border-radius: 10px;
+            background: #141720;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            color: var(--text-primary);
+            font-size: 12px;
+            outline: none;
+        }
+
+        .tree-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-muted);
+            fill: none;
+        }
+
+        /* Commands Tree Scroll Body */
+        .commands-tree-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .cmd-folder-card {
+            background: #181b26;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: border-color 0.2s var(--ease);
+        }
+
+        .cmd-folder-card:hover {
+            border-color: rgba(99, 102, 241, 0.38);
+        }
+
+        .cmd-folder-head {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            user-select: none;
+        }
+
+        .cmd-folder-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cmd-folder-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--accent-soft);
+            color: #a5b4fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cmd-folder-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.85;
+        }
+
+        .cmd-folder-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.35;
+        }
+
+        .cmd-folder-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            vertical-align: middle;
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            padding: 1px 8px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.09);
+            line-height: 1.3;
+        }
+
+        .cmd-folder-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 14px 14px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        /* Vertical tree branch line inside folder */
+        .cmd-folder-items::before {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            bottom: 14px;
+            width: 2px;
+            background: rgba(99, 102, 241, 0.28);
+            border-radius: 2px;
+        }
+
+        .cmd-folder-card.collapsed .cmd-folder-items {
+            display: none;
+        }
+
+        .cmd-leaf-row {
+            padding: 11px 14px;
+            border-radius: 12px;
+            background: #12151e;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.18s var(--ease);
+        }
+
+        .cmd-leaf-row:hover {
+            background: #171b26;
+            border-color: rgba(99, 102, 241, 0.32);
+        }
+
+        .cmd-leaf-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cmd-leaf-name {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #f3f4f8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Sub-tree under each command: Trigger Phrase + Action Steps */
+        .cmd-leaf-details {
+            padding-left: 14px;
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .cmd-leaf-trigger-line {
+            color: #a5b4fc;
+            font-weight: 500;
+        }
+
+        .cmd-leaf-steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: var(--text-secondary);
+        }
+
+        .cmd-badge-chain {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 5px;
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .cmd-badge-confirm {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 5px;
+            background: rgba(245, 158, 11, 0.18);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        .cmd-folder-chevron {
+            font-size: 11px;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+            display: inline-block;
+            transform: rotate(90deg);
+        }
+
+        .cmd-folder-card.collapsed .cmd-folder-chevron {
+            transform: rotate(0deg);
+        }
+
+        .cmd-leaf-row.cmd-leaf-disabled {
+            opacity: 0.52;
+            background: rgba(18, 21, 30, 0.4);
+            border-style: dashed;
+        }
+
+        .mini-pill.off-pill {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .mini-pill.active-pill {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.35);
+        }
+
+        /* Sleek Radar Search Animation in Chat Stream */
+        .search-indicator-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, rgba(30, 36, 52, 0.9), rgba(15, 20, 32, 0.98));
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 16px;
+            margin: 10px 0;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 15px rgba(99, 102, 241, 0.15);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .search-radar {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .search-radar-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(99, 102, 241, 0.65);
+            animation: searchRadarPulse 1.8s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        .search-radar-circle:nth-child(2) {
+            animation-delay: 0.6s;
+        }
+
+        .search-radar-icon {
+            width: 16px;
+            height: 16px;
+            stroke: #a5b4fc;
+            fill: none;
+            z-index: 2;
+            animation: searchIconSpin 4s linear infinite;
+        }
+
+        @keyframes searchRadarPulse {
+            0% { transform: scale(0.35); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        @keyframes searchIconSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .search-status-text {
+            font-size: 13px;
+            color: #f1f5f9;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .search-status-query {
+            color: #818cf8;
+            font-weight: 600;
+        }
+
+        .cmd-leaf-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        /* Right sidebar of Commands page: "Новая команда" button matching screenshot */
+        .commands-side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .btn-new-cmd-hero {
+            width: 100%;
+            height: 44px;
+            flex-shrink: 0;
+            border-radius: 14px;
+            background: #3a3f54;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            font-family: var(--font-ui);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            cursor: pointer;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
+            transition: all 0.2s var(--ease);
+        }
+
+        .btn-new-cmd-hero:hover {
+            background: var(--accent);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45);
+        }
+
+        .btn-new-cmd-hero svg {
+            width: 18px;
+            height: 18px;
+            stroke: #ffffff;
+            stroke-width: 2.2;
+            fill: none;
+        }
+
+        .side-card {
+            background: #1c1f2b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 13px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .side-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Action Macro Recorder Box */
+        .recorder-box {
+            padding: 10px 12px;
+            border-radius: 11px;
+            background: #131620;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recorder-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .rec-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .rec-indicator.recording {
+            color: #fb7185;
+        }
+
+        .rec-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .rec-indicator.recording .rec-dot {
+            box-shadow: 0 0 10px #f43f5e;
+            animation: micPulse 1.2s infinite;
+        }
+
+        /* Confirmation Modal with Countdown Timer */
+        .cmd-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(7, 8, 12, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: none;
+            pointer-events: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .cmd-modal-backdrop.open {
+            display: flex;
+            pointer-events: auto;
+        }
+
+        .confirm-modal-card {
+            max-width: 460px;
+            width: 100%;
+            background: #151824;
+            border: 1px solid var(--accent-border);
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            animation: modalPop 0.22s var(--ease);
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .confirm-timer-bar-wrap {
+            width: 100%;
+            height: 6px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .confirm-timer-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #f43f5e);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .new-cmd-modal-card {
+            max-width: 650px;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            background: #141722;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 24px 26px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ================= TAB PAGES & HEADERS ================= */
+        .tab-page {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            animation: fadeInPage 0.18s var(--ease);
+        }
+
+        .tab-page.active {
+            display: flex;
+        }
+
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            padding: 18px 26px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(15, 18, 26, 0.75);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .page-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.01em;
+        }
+
+        .page-subtitle {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+        }
+
+        .header-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ================= STATUS PILL & HEADER CONTROLS ================= */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 34px;
+            padding: 0 13px;
+            border-radius: 99px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.32);
+            color: #34d399;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .status-pill.listening {
+            background: var(--rose-soft);
+            border-color: rgba(244, 63, 94, 0.45);
+            color: #fb7185;
+        }
+
+        .status-pill.thinking {
+            background: var(--amber-soft);
+            border-color: rgba(245, 158, 11, 0.45);
+            color: #fbbf24;
+        }
+
+        .header-vol-wrap,
+        .mode-switch-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 34px;
+            padding: 0 12px;
+            border-radius: 10px;
+            background: #12151f;
+            border: 1px solid var(--border-card);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .header-vol-wrap svg {
+            width: 15px;
+            height: 15px;
+            stroke: #a5b4fc;
+            fill: none;
+            stroke-width: 2;
+            flex-shrink: 0;
+        }
+
+        .header-vol-slider {
+            width: 82px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .mode-select-inline {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 12px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .mode-select-inline option {
+            background: #141722;
+            color: var(--text-primary);
+        }
+
+        /* ================= BUTTONS & SVG SIZING ================= */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 36px;
+            padding: 6px 14px;
+            border-radius: 10px;
+            background: #1e2231;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 12.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.18s var(--ease);
+            user-select: none;
+        }
+
+        .action-btn:hover {
+            background: #262b3d;
+            border-color: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.primary {
+            background: var(--accent);
+            border-color: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.32);
+        }
+
+        .action-btn.primary:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 8px 22px rgba(99, 102, 241, 0.45);
+        }
+
+        .action-btn.emerald {
+            background: rgba(16, 185, 129, 0.16);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+        }
+
+        .action-btn.danger {
+            background: rgba(244, 63, 94, 0.16);
+            border-color: rgba(244, 63, 94, 0.4);
+            color: #fda4af;
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(244, 63, 94, 0.28);
+            color: #ffffff;
+        }
+
+        .action-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #1b1f2e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.18s var(--ease);
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            background: #252a3d;
+            border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        .icon-btn.recording {
+            background: var(--rose);
+            border-color: #fda4af;
+            color: #ffffff;
+            animation: micPulse 1.3s infinite;
+        }
+
+        @keyframes micPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.55); }
+            50% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
+        }
+
+        .icon-btn svg {
+            width: 19px;
+            height: 19px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ================= CHAT WORKSPACE & STREAM ================= */
+        .chat-workspace {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-stream {
+            flex: 1;
+            overflow-y: auto;
+            padding: 22px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .empty-state-hero {
+            margin: auto;
+            max-width: 680px;
+            width: 100%;
+            padding: 28px;
+            border-radius: 22px;
+            background: rgba(24, 28, 40, 0.72);
+            border: 1px solid var(--border-card);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 18px;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
+        }
+
+        .empty-state-hero.hidden {
+            display: none !important;
+        }
+
+        .empty-hero-badge {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-border);
+            color: #a5b4fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-hero-badge svg {
+            width: 26px;
+            height: 26px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .empty-hero-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        .empty-hero-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .starter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+
+        .starter-card {
+            padding: 13px 15px;
+            border-radius: 14px;
+            background: #131621;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.18s var(--ease);
+        }
+
+        .starter-card:hover {
+            background: #1a1f2e;
+            border-color: var(--accent-border);
+            transform: translateY(-2px);
+        }
+
+        .starter-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .starter-card-sub {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+        }
+
+        /* Chat Bubbles */
+        .chat-item {
+            max-width: 78%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .chat-item.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 8px 22px rgba(79, 70, 229, 0.28);
+        }
+
+        .chat-item.assistant {
+            align-self: flex-start;
+            background: #1c202e;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-meta {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            opacity: 0.72;
+            text-transform: uppercase;
+        }
+
+        .bubble-text {
+            font-size: 14px;
+        }
+
+        .tool-log {
+            align-self: flex-start;
+            font-size: 12px;
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.11);
+            border: 1px solid rgba(99, 102, 241, 0.28);
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+
+        /* Quick Pose Bar & Composer */
+        .quick-pose-bar {
+            padding: 10px 26px;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(16, 19, 27, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-pose-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .quick-bar-label {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-right: 4px;
+        }
+
+        .mini-pill {
+            padding: 5px 11px;
+            border-radius: 99px;
+            background: #191d2b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            font-family: var(--font-ui);
+            font-size: 11.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.16s var(--ease);
+        }
+
+        .mini-pill:hover {
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.22);
+            background: #222738;
+        }
+
+        .mini-pill.active {
+            background: var(--accent);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+
+        .chat-footer {
+            padding: 14px 26px 18px;
+            background: #12141d;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .input-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prompt-input {
+            flex: 1;
+            height: 42px;
+            padding: 0 16px;
+            border-radius: 12px;
+            background: #181c28;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.18s var(--ease);
+        }
+
+        .prompt-input:focus {
+            border-color: var(--accent);
+        }
+
+        /* ================= COMMAND TREE LEAF DETAILS ================= */
+        .cmd-leaf-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cmd-leaf-trigger {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .cmd-trigger-line {
+            font-size: 12px;
+            color: #a5b4fc;
+        }
+
+        .cmd-trigger-line b {
+            color: #e0e7ff;
+        }
+
+        .cmd-steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-top: 2px;
+        }
+
+        .cmd-step-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .cmd-step-num {
+            color: #6ee7b7;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        /* ================= STUDIO & SETTINGS SCROLL PAGES ================= */
+        .page-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 22px 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-block {
+            background: #181b26;
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            gap: 14px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .section-head > div {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .section-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .model-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .model-card {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #12151f;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0;
+            cursor: pointer;
+            transition: all 0.18s var(--ease);
+        }
+
+        .model-card:hover {
+            border-color: rgba(255, 255, 255, 0.24);
+            transform: translateY(-2px);
+        }
+
+        .model-card.active {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.12);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+        }
+
+        .model-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .model-type-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 99px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .model-type-badge.vrm {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+        }
+
+        .model-type-badge.live2d {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        .model-size-tag {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .model-card-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .model-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 11.5px;
+            color: var(--text-secondary);
+        }
+
+        .model-card-footer > span:first-child {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+
+        .pose-grid,
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .pose-btn,
+        .preset-card {
+            padding: 12px 15px;
+            border-radius: 13px;
+            background: #12151f;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.18s var(--ease);
+        }
+
+        .pose-btn:hover,
+        .preset-card:hover {
+            background: #181c29;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pose-btn.active,
+        .preset-card.active {
+            background: rgba(99, 102, 241, 0.16);
+            border-color: var(--accent);
+        }
+
+        .pose-btn-title,
+        .preset-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .pose-btn-sub,
+        .preset-card-sub {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+        }
+
+        /* ================= SETTINGS FORMS & SLIDERS ================= */
+        .settings-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .form-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .field-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ctrl-select,
+        .ctrl-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border-radius: 10px;
+            background: #11141d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .ctrl-select:focus,
+        .ctrl-input:focus {
+            border-color: var(--accent);
+        }
+
+        .ctrl-select option {
+            background: #141722;
+            color: var(--text-primary);
+        }
+
+        .eq-slider-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: #12151f;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .eq-slider {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .eq-val-badge {
+            font-family: monospace;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.14);
+            padding: 2px 7px;
+            border-radius: 6px;
+        }
+
+        .status-banner {
+            display: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 500;
+        }
+
+        .status-banner.ok {
+            display: block;
+            background: var(--emerald-soft);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+        }
+
+        .status-banner.err {
+            display: block;
+            background: var(--rose-soft);
+            border: 1px solid rgba(244, 63, 94, 0.4);
+            color: #fda4af;
+        }
+
+        /* ================= TOAST NOTIFICATIONS ================= */
+        .toast-container {
+            position: fixed;
+            bottom: 22px;
+            right: 22px;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast-msg {
+            padding: 11px 16px;
+            border-radius: 12px;
+            background: rgba(20, 24, 36, 0.96);
+            border: 1px solid var(--accent-border);
+            color: #ffffff;
+            font-size: 12.5px;
+            font-weight: 600;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+            animation: fadeInPage 0.2s var(--ease);
+        }
+
+        .cmd-builder-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .step-builder-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 1080px) {
+            .commands-studio-wrapper {
+                grid-template-columns: minmax(0, 1fr) 264px;
+                gap: 14px;
+            }
+            .settings-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="studio-layout">
+        <!-- ================= 6-SLOT SVG ICON RAIL (EXACTLY 6 BUTTONS AS ON SCREENSHOT) ================= -->
+        <aside class="sidebar">
+            <!-- 1. TOP: App Logo -->
+            <button type="button" class="rail-logo-btn" id="rail-logo-btn" data-tooltip="EVA AI — Главная">
+                <svg viewBox="0 0 24 24">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                    <polyline points="2 17 12 22 22 17"/>
+                    <polyline points="2 12 12 17 22 12"/>
+                </svg>
+            </button>
+
+            <!-- 2..5. MIDDLE: 4 Main Sections (Chat, Commands, Studio, Settings) -->
+            <nav class="rail-nav-list">
+                <!-- Slot 1 (Middle): Чат -->
+                <button type="button" class="rail-nav-btn active" data-tab="tab-chat" data-tooltip="Чат: история команд и запросов">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </button>
+
+                <!-- Slot 2 (Middle): Команды -->
+                <button type="button" class="rail-nav-btn" data-tab="tab-commands" data-tooltip="Команды: древо папок и создание новых">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="4 17 10 11 4 5"/>
+                        <line x1="12" y1="19" x2="20" y2="19"/>
+                    </svg>
+                </button>
+
+                <!-- Slot 3 (Middle): Студия -->
+                <button type="button" class="rail-nav-btn" data-tab="tab-wardrobe" data-tooltip="Студия: 3D/Live2D персонаж и позы">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+
+                <!-- Slot 4 (Middle): Настройки -->
+                <button type="button" class="rail-nav-btn" data-tab="tab-settings" data-tooltip="Настройки: выбор ИИ, голоса и эквалайзера">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </button>
+            </nav>
+
+            <!-- 6. BOTTOM: GitHub Project Button -->
+            <div class="rail-bottom-group">
+                <button type="button" class="rail-action-btn" id="btn-github-repo" data-tooltip="GitHub репозиторий проекта">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Legacy Telemetry Stash for backward-compatibility with tests -->
+            <div class="legacy-telemetry-stash">
+                <span id="sidebar-llm-label">Ollama</span>
+                <span id="sidebar-avatar-label">Eva VRM1</span>
+                <button id="btn-hide-control"></button>
+            </div>
+        </aside>
+
+        <!-- ================= MAIN STAGE ================= -->
+        <main class="main-stage">
+
+            <!-- PAGE 1: LIVE DIALOGUE & QUICK ACTIONS -->
+            <section class="tab-page active" id="tab-chat">
+                <div class="page-header">
+                    <div class="page-title-group">
+                        <h2 class="page-title">Чат и История запросов</h2>
+                        <p class="page-subtitle">Говорите «Ева ...» или пишите команды для ПК, приложений, интернета и аватара</p>
+                    </div>
+
+                    <div class="header-toolbar">
+                        <div class="status-pill" id="status-pill-box">
+                            <span class="status-dot"></span>
+                            <span id="agent-status-text">ONLINE</span>
+                        </div>
+
+                        <!-- Avatar 3D Visibility Toggle -->
+                        <button type="button" class="action-btn emerald" id="btn-toggle-avatar-vis" style="width: auto; min-height: 34px; padding: 5px 11px; font-size: 12px;" title="Включить или скрыть 3D модель">
+                            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <span id="avatar-vis-label">3D Модель</span>
+                        </button>
+
+                        <div class="header-vol-wrap" title="Громкость голоса самой Евы (0% — 150%)">
+                            <svg viewBox="0 0 24 24">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                            </svg>
+                            <span>Голос:</span>
+                            <input type="range" class="header-vol-slider" id="header-eva-volume" min="0" max="150" step="5" value="100" />
+                            <span class="eq-val-badge" id="header-eva-volume-val">100%</span>
+                        </div>
+
+                        <div class="mode-switch-wrap" title="Выберите режим работы: Ева (Компаньон) или J.A.R.V.I.S. («Да, сэр»)">
+                            <span>Режим ИИ:</span>
+                            <select class="mode-select-inline" id="select-ai-mode">
+                                <option value="conversational">Ева (Компаньон)</option>
+                                <option value="jarvis">J.A.R.V.I.S. («Да, сэр»)</option>
+                            </select>
+                        </div>
+
+                        <button class="action-btn" id="btn-clear-history" style="width: auto; min-height: 34px; padding: 6px 12px; font-size: 12px;" title="Очистить историю диалога">
+                            <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                            <span>Очистить</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chat-workspace">
+                    <div class="chat-stream" id="chat-stream">
+                        <!-- Shown when session history is empty -->
+                        <div class="empty-state-hero" id="empty-state-hero">
+                            <div class="empty-hero-badge">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                    <line x1="12" y1="19" x2="12" y2="22"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="empty-hero-title">Привет! Я Ева — твой голосовой и визуальный ассистент</h3>
+                                <p class="empty-hero-desc" style="margin-top: 6px;">
+                                    Позови меня голосом <strong>«Ева, ...»</strong> или нажми на быстрый сценарий:
+                                </p>
+                            </div>
+
+                            <div class="starter-grid">
+                                <button class="starter-card" data-quick-prompt="Доброе утро">
+                                    <span class="starter-card-title">Сценарий «Доброе утро»</span>
+                                    <span class="starter-card-sub">Браузер + нужные сайты + громкость Windows 50%</span>
+                                </button>
+                                <button class="starter-card" data-quick-prompt="Уютный вечер">
+                                    <span class="starter-card-title">Сценарий «Уютный вечер»</span>
+                                    <span class="starter-card-sub">Запуск YouTube, Steam и спокойной музыки</span>
+                                </button>
+                                <button class="starter-card" data-quick-prompt="Какая сейчас погода в Москве">
+                                    <span class="starter-card-title">Живой поиск в интернете</span>
+                                    <span class="starter-card-sub">Погода сейчас, результаты матчей FIFA, новости</span>
+                                </button>
+                                <button class="starter-card" data-quick-prompt="Включи музыку в Спотифай и открой Стим">
+                                    <span class="starter-card-title">Мульти-команды в 1 запрос</span>
+                                    <span class="starter-card-sub">Выполнение сразу нескольких задач подряд</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Pose & Camera Bar -->
+                    <div class="quick-pose-bar">
+                        <div class="quick-pose-group">
+                            <span class="quick-bar-label">Движения:</span>
+                            <button class="mini-pill active" data-pose="stand">Стоять</button>
+                            <button class="mini-pill" data-pose="sit">Сесть</button>
+                            <button class="mini-pill" data-pose="raise_hand">Помахать</button>
+                            <button class="mini-pill" data-pose="lean">Наклон</button>
+                            <button class="mini-pill" data-pose="dance">Танец</button>
+                            <button class="mini-pill" data-pose="spin">360°</button>
+                            <button class="mini-pill" data-pose="pose_model">Модель</button>
+                        </div>
+
+                        <div class="quick-pose-group">
+                            <span class="quick-bar-label">Камера:</span>
+                            <button class="mini-pill" data-cam="portrait">Лицо</button>
+                            <button class="mini-pill active" data-cam="waist">По пояс</button>
+                            <button class="mini-pill" data-cam="full">Полный рост</button>
+                        </div>
+                    </div>
+
+                    <!-- Composer -->
+                    <div class="chat-footer">
+                        <div class="input-bar">
+                            <!-- Mic Push-to-Talk / Listen Button -->
+                            <button class="icon-btn" id="btn-mic-toggle" title="Начать / остановить прослушивание">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                    <line x1="12" y1="19" x2="12" y2="22"/>
+                                </svg>
+                            </button>
+
+                            <!-- Dedicated Microphone Mute Button (blocks EVA from hearing anything) -->
+                            <button type="button" class="icon-btn" id="btn-mic-mute" style="width: auto; padding: 0 12px; gap: 6px; font-size: 12px; font-weight: 600;" title="Замутить микрофон, чтобы Ева вас не слышала">
+                                <svg id="svg-mic-on" viewBox="0 0 24 24">
+                                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                    <line x1="12" y1="19" x2="12" y2="22"/>
+                                    <line x1="8" y1="22" x2="16" y2="22"/>
+                                </svg>
+                                <svg id="svg-mic-off" viewBox="0 0 24 24" style="display: none; stroke: #fb7185;">
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6"/>
+                                    <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+                                    <line x1="12" y1="19" x2="12" y2="22"/>
+                                </svg>
+                                <span>Слух</span>
+                            </button>
+
+                            <input
+                                type="text"
+                                class="prompt-input"
+                                id="user-input-text"
+                                placeholder="Скажите «Ева ...» или напишите запрос (например: доброе утро, какая сейчас погода, включи спотифай)..."
+                                autocomplete="off"
+                            />
+
+                            <button class="action-btn danger" id="btn-stop-speech" style="display: none; width: auto; height: 40px; padding: 0 14px;" title="Остановить речь">
+                                <svg viewBox="0 0 24 24">
+                                    <rect x="6" y="6" width="12" height="12" rx="2"/>
+                                </svg>
+                                <span>Стоп речь</span>
+                            </button>
+
+                            <button class="action-btn primary" id="btn-send-text" style="width: auto; height: 42px; padding: 0 22px;">
+                                <svg viewBox="0 0 24 24">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                                <span>Отправить</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 2: COMMANDS & SCENARIOS (1:1 REFERENCE MOCKUP) -->
+            <section class="tab-page" id="tab-commands">
+                <div class="commands-page-shell">
+                    <!-- Top Heading "Команды" exactly as in reference screenshot -->
+                    <div class="commands-page-top">
+                        <h1 class="commands-big-heading">Команды</h1>
+                    </div>
+
+                    <div class="commands-studio-wrapper">
+                        <!-- Left: Large Gray Rounded Window with Folder Tree (PC / 3D Model / App Packs) -->
+                        <div class="commands-tree-panel" id="commands-tree-container">
+                            <div class="commands-tree-header">
+                                <div class="scope-switcher">
+                                    <button type="button" class="scope-btn active" data-tree-scope="pc">Управление ПК</button>
+                                    <button type="button" class="scope-btn" data-tree-scope="avatar">Управление 3D моделькой</button>
+                                    <button type="button" class="scope-btn" data-tree-scope="packs">Паки программ (Обучение)</button>
+                                </div>
+
+                                <div class="tree-search-bar">
+                                    <svg class="tree-search-icon" viewBox="0 0 24 24">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                    </svg>
+                                    <input type="text" class="tree-search-input" id="cmd-tree-search" placeholder="Поиск команд..." />
+                                </div>
+                            </div>
+
+                            <div class="commands-tree-body" id="commands-tree-body">
+                                <!-- Populated dynamically with Folder -> Command -> Actions & Trigger Tree -->
+                            </div>
+                        </div>
+
+                        <!-- Right: "Новая команда" Button + Action Recorder + Quick Scenario Presets -->
+                        <div class="commands-side-panel">
+                            <button type="button" class="btn-new-cmd-hero" id="btn-open-new-cmd-modal">
+                                <svg viewBox="0 0 24 24">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                <span>Новая команда</span>
+                            </button>
+
+                            <button type="button" class="action-btn" id="btn-restore-defaults" style="min-height: 30px; flex-shrink: 0; font-size: 11.5px; justify-content: center; border-color: rgba(255,255,255,0.12); color: var(--text-secondary);" title="Восстановить все стандартные команды и паки">
+                                ↺ Сбросить стандартные команды
+                            </button>
+
+                            <!-- Action Macro Recorder Card -->
+                            <div class="side-card">
+                                <div class="side-card-title">
+                                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: #a5b4fc; fill: none; stroke-width: 2; flex-shrink: 0;">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <circle cx="12" cy="12" r="4"/>
+                                    </svg>
+                                    <span>Запись действий (Мышь + Клавиши)</span>
+                                </div>
+                                <p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.35;">
+                                    Запишите свои нажатия мышкой и клавиш — ИИ повторит их сам по ключевому слову.
+                                </p>
+
+                                <div class="recorder-box">
+                                    <div class="recorder-status-row">
+                                        <div class="rec-indicator" id="macro-rec-indicator">
+                                            <span class="rec-dot"></span>
+                                            <span id="macro-rec-status-text">Готов к записи</span>
+                                        </div>
+                                        <span id="macro-rec-timer" style="font-family: monospace; font-size: 11.5px; color: var(--text-muted);">00:00</span>
+                                    </div>
+                                    <button type="button" class="action-btn primary" id="btn-toggle-macro-record" style="min-height: 34px; font-size: 12px;">
+                                        Записать действия
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Ready-Made Multi-Step Scenario Templates -->
+                            <div class="side-card">
+                                <div class="side-card-title">
+                                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: #34d399; fill: none; stroke-width: 2; flex-shrink: 0;">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                    </svg>
+                                    <span>Готовые шаблоны цепочек</span>
+                                </div>
+                                <p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.35;">
+                                    Нажмите, чтобы открыть конструктор с готовой цепочкой:
+                                </p>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <button type="button" class="action-btn" data-scenario-template="morning" style="justify-content: flex-start; text-align: left; min-height: 32px; padding: 6px 10px; font-size: 11.5px; line-height: 1.25;">
+                                        ☀️ «Доброе утро» (Браузер + Звук 50%)
+                                    </button>
+                                    <button type="button" class="action-btn" data-scenario-template="evening" style="justify-content: flex-start; text-align: left; min-height: 32px; padding: 6px 10px; font-size: 11.5px; line-height: 1.25;">
+                                        🌙 «Уютный вечер» (YouTube + Steam)
+                                    </button>
+                                    <button type="button" class="action-btn" data-scenario-template="stream" style="justify-content: flex-start; text-align: left; min-height: 32px; padding: 6px 10px; font-size: 11.5px; line-height: 1.25;">
+                                        🔴 «Начать стрим» (OBS + Эфир + Сайт)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden legacy containers for test backward compatibility -->
+                <div style="display: none;">
+                    <div id="custom-commands-list"></div>
+                    <input id="cmd-trigger-input" />
+                    <select id="cmd-action-type"></select>
+                    <input id="cmd-target-input" />
+                    <input id="cmd-response-input" />
+                    <button id="btn-add-custom-cmd"></button>
+                    <button id="btn-pick-cmd-app"></button>
+                </div>
+            </section>
+
+            <!-- PAGE 3: AVATAR STUDIO (3D VRM / LIVE2D GALLERY + POSES + CAMERA) -->
+            <section class="tab-page" id="tab-wardrobe">
+                <div class="page-header">
+                    <div class="page-title-group">
+                        <h2 class="page-title">Студия Аватара (3D VRM и 2D Live2D)</h2>
+                        <p class="page-subtitle">Живая процедурная анимация 3D VRM и управление параметрами 2D Live2D моделей</p>
+                    </div>
+
+                    <div class="header-toolbar">
+                        <button class="action-btn primary" id="btn-upload-live2d-folder" style="width: auto;">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>Загрузить папку Live2D</span>
+                        </button>
+                        <input type="file" id="live2d-folder-input" webkitdirectory directory multiple style="display: none;" />
+
+                        <button class="action-btn" id="btn-upload-vrm" style="width: auto;">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span>Загрузить .VRM / .ZIP</span>
+                        </button>
+                        <input type="file" id="vrm-file-input" accept=".vrm,.zip" style="display: none;" />
+
+                        <button class="action-btn" id="btn-open-models-dir" style="width: auto;" title="Открыть папку data/models в Проводнике Windows">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                            <span>Папка моделей</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="page-scroll">
+                    <!-- Visual Gallery of Installed Models -->
+                    <div class="section-block">
+                        <div class="section-head">
+                            <div>
+                                <div class="section-title">Установленные модели (3D VRM и 2D Live2D)</div>
+                                <div class="section-desc">Нажмите на любую карточку, чтобы мгновенно сменить модель на рабочем столе</div>
+                            </div>
+
+                            <select class="ctrl-select" id="select-vrm-model" style="max-width: 280px;">
+                                <option value="sample_vrm1.vrm">[3D VRM] Eva Classic VRM1</option>
+                                <option value="alicia.vrm">[3D VRM] Alicia Solid</option>
+                                <option value="shizuku_live2d/shizuku.model.json">[Live2D] Shizuku Sample (Cubism 2D)</option>
+                            </select>
+                        </div>
+
+                        <div id="live2d-upload-status" class="status-banner"></div>
+
+                        <div class="model-gallery-grid" id="model-gallery-grid"></div>
+                    </div>
+
+                    <!-- Full Pose & Animation Matrix -->
+                    <div class="section-block">
+                        <div class="section-head">
+                            <div>
+                                <div class="section-title">Позы и движения (Работают и для 3D VRM, и для 2D Live2D)</div>
+                                <div class="section-desc">Вы можете нажимать кнопки здесь или просто сказать голосом: «Ева, помаши рукой / наклонись / станцуй»</div>
+                            </div>
+                        </div>
+
+                        <div class="pose-grid">
+                            <button class="pose-btn active" data-pose="stand">
+                                <span class="pose-btn-title">Стоять (Живая стойка)</span>
+                                <span class="pose-btn-sub">Дыхание, перенос веса и взгляд</span>
+                            </button>
+                            <button class="pose-btn" data-pose="sit">
+                                <span class="pose-btn-title">Сесть</span>
+                                <span class="pose-btn-sub">Присесть поудобнее</span>
+                            </button>
+                            <button class="pose-btn" data-pose="raise_hand">
+                                <span class="pose-btn-title">Помахать рукой</span>
+                                <span class="pose-btn-sub">Приветственный жест рукой</span>
+                            </button>
+                            <button class="pose-btn" data-pose="hands_up">
+                                <span class="pose-btn-title">Руки вверх</span>
+                                <span class="pose-btn-sub">Поднять обе руки и потянуться</span>
+                            </button>
+                            <button class="pose-btn" data-pose="dance">
+                                <span class="pose-btn-title">Танец</span>
+                                <span class="pose-btn-sub">Ритмичный танец всем телом</span>
+                            </button>
+                            <button class="pose-btn" data-pose="spin">
+                                <span class="pose-btn-title">Оборот 360°</span>
+                                <span class="pose-btn-sub">Плавный разворот вокруг оси</span>
+                            </button>
+                            <button class="pose-btn" data-pose="lean">
+                                <span class="pose-btn-title">Наклон вперёд</span>
+                                <span class="pose-btn-sub">Наклониться корпусом ближе</span>
+                            </button>
+                            <button class="pose-btn" data-pose="pose_model">
+                                <span class="pose-btn-title">Поза модели</span>
+                                <span class="pose-btn-sub">Изящная стойка с рукой на талии</span>
+                            </button>
+                            <button class="pose-btn" data-pose="shy">
+                                <span class="pose-btn-title">Смущение</span>
+                                <span class="pose-btn-sub">Скромная кокетливая поза</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Camera Framing -->
+                    <div class="section-block">
+                        <div class="section-head">
+                            <div>
+                                <div class="section-title">Ракурс камеры и масштаб</div>
+                                <div class="section-desc">Вращайте модель мышью на 360° и приближайте колёсиком прямо на рабочем столе</div>
+                            </div>
+                        </div>
+
+                        <div class="preset-grid">
+                            <button class="preset-card" data-cam="portrait">
+                                <span class="preset-card-title">Крупный план</span>
+                                <span class="preset-card-sub">Фокус на лице и взгляде</span>
+                            </button>
+                            <button class="preset-card" data-cam="bust">
+                                <span class="preset-card-title">По грудь</span>
+                                <span class="preset-card-sub">Средний портретный ракурс</span>
+                            </button>
+                            <button class="preset-card active" data-cam="waist">
+                                <span class="preset-card-title">По пояс</span>
+                                <span class="preset-card-sub">Оптимальный вид фигуры</span>
+                            </button>
+                            <button class="preset-card" data-cam="full">
+                                <span class="preset-card-title">В полный рост</span>
+                                <span class="preset-card-sub">Модель целиком с головы до ног</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 4: AI ENGINE (OLLAMA) & VOICE EQUALIZER -->
+            <section class="tab-page" id="tab-settings">
+                <div class="page-header">
+                    <div class="page-title-group">
+                        <h2 class="page-title">Ядро ИИ и Эквалайзер Голоса</h2>
+                        <p class="page-subtitle">Настройте модель Ollama, режим характера и точный тембр/высоту голоса Евы</p>
+                    </div>
+
+                    <div class="header-toolbar">
+                        <button class="action-btn primary" id="btn-save-settings" style="width: auto; padding: 0 22px;">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            <span>Сохранить настройки</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="page-scroll">
+                    <div class="settings-columns">
+                        <!-- Column 1: LLM Engine -->
+                        <div class="section-block">
+                            <div class="section-head">
+                                <div>
+                                    <div class="section-title">Нейросеть (LLM-Провайдер)</div>
+                                    <div class="section-desc">Автоматическое обнаружение локальных моделей Ollama и облачных API</div>
+                                </div>
+                            </div>
+
+                            <div class="form-stack">
+                                <div class="field-box">
+                                    <label class="field-label" for="select-llm-provider">Провайдер ИИ</label>
+                                    <select class="ctrl-select" id="select-llm-provider">
+                                        <option value="ollama">Ollama (Локальные установленные модели)</option>
+                                        <option value="eva_free">EVA Cloud Turbo (Облако без ключа)</option>
+                                        <option value="lm_studio">LM Studio (Локальный сервер)</option>
+                                        <option value="gemini">Google Gemini API</option>
+                                        <option value="openrouter">OpenRouter API</option>
+                                        <option value="groq">Groq Cloud API</option>
+                                        <option value="openai">OpenAI API</option>
+                                    </select>
+                                </div>
+
+                                <div class="field-box">
+                                    <label class="field-label" for="select-llm-model">Модель из списка установленных</label>
+                                    <div class="field-row">
+                                        <select class="ctrl-select" id="select-llm-model"></select>
+                                        <button class="action-btn" id="btn-refresh-models" style="width: auto; padding: 0 14px;" title="Обновить список моделей Ollama">
+                                            Обновить
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="field-box">
+                                    <label class="field-label" for="cfg-llm-base">Адрес сервера (API Base URL)</label>
+                                    <input type="text" class="ctrl-input" id="cfg-llm-base" placeholder="http://127.0.0.1:11434/v1" />
+                                </div>
+
+                                <div class="field-box">
+                                    <label class="field-label" for="cfg-llm-key">API Ключ (не нужен для Ollama)</label>
+                                    <div class="field-row">
+                                        <input type="password" class="ctrl-input" id="cfg-llm-key" placeholder="Оставьте пустым для локальных моделей" />
+                                        <button class="action-btn" id="btn-test-llm" style="width: auto; padding: 0 16px;">Проверить связь</button>
+                                    </div>
+                                </div>
+
+                                <div class="status-banner" id="llm-test-status"></div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Sound Output, Microphone & Voice -->
+                        <div class="section-block">
+                            <div class="section-head">
+                                <div>
+                                    <div class="section-title">Звук, Наушники и Голос Евы</div>
+                                    <div class="section-desc">Выберите наушники/динамики, микрофон, голосовой движок и громкость</div>
+                                </div>
+                                <button class="action-btn primary" id="btn-test-voice-btn" style="width: auto; padding: 0 18px;">
+                                    ▶ Проверить звук
+                                </button>
+                            </div>
+
+                            <div class="form-stack" style="gap: 12px;">
+                                <!-- Audio Output & Input Devices (2 columns) -->
+                                <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px;">
+                                    <div class="field-box">
+                                        <label class="field-label" for="select-output-device">Устройство вывода (Наушники)</label>
+                                        <select class="ctrl-select" id="select-output-device">
+                                            <option value="auto">Авто: Все активные (Наушники + Динамики)</option>
+                                        </select>
+                                    </div>
+                                    <div class="field-box">
+                                        <label class="field-label" for="select-input-device">Микрофон (Устройство ввода)</label>
+                                        <select class="ctrl-select" id="select-input-device">
+                                            <option value="-1">По умолчанию (Системный микрофон)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Voice Profile -->
+                                <div class="field-box">
+                                    <label class="field-label" for="select-voice-profile">Голосовой профиль Евы (сохраняется автоматически)</label>
+                                    <select class="ctrl-select" id="select-voice-profile">
+                                        <option value="elevenlabs">ElevenLabs — Ультра-живой голос (Flash v2.5 + авто-резерв)</option>
+                                        <option value="jarvis">J.A.R.V.I.S. — Голос Джарвиса (Баритон, сэр)</option>
+                                        <option value="aoede">Aoede — Ava Neural (Мягкий женский)</option>
+                                        <option value="puck">Puck — Seraphina Neural (Яркий женский)</option>
+                                        <option value="kore">Kore — Emma Neural (Нежный женский)</option>
+                                        <option value="google_female">Светлана Neural (Русский женский)</option>
+                                        <option value="fenrir">Fenrir — Andrew Neural (Мужской)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Compact 3-Column Sound Controls: Volume, Speed, Pitch -->
+                                <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+                                    <div class="eq-slider-row" style="padding: 10px 12px;">
+                                        <div class="field-label" style="margin-bottom: 4px;">
+                                            <span>Громкость</span>
+                                            <span class="eq-val-badge" id="eq-volume-val">100%</span>
+                                        </div>
+                                        <input type="range" class="eq-slider" id="eq-volume" min="0" max="150" step="5" value="100" />
+                                    </div>
+
+                                    <div class="eq-slider-row" style="padding: 10px 12px;">
+                                        <div class="field-label" style="margin-bottom: 4px;">
+                                            <span>Скорость</span>
+                                            <span class="eq-val-badge" id="eq-speed-val">1.00x</span>
+                                        </div>
+                                        <input type="range" class="eq-slider" id="eq-speed" min="0.70" max="1.40" step="0.05" value="1.00" />
+                                    </div>
+
+                                    <div class="eq-slider-row" style="padding: 10px 12px;">
+                                        <div class="field-label" style="margin-bottom: 4px;">
+                                            <span>Тон</span>
+                                            <span class="eq-val-badge" id="eq-pitch-val">0 пт</span>
+                                        </div>
+                                        <input type="range" class="eq-slider" id="eq-pitch" min="-12" max="12" step="1" value="0" />
+                                    </div>
+                                </div>
+
+                                <!-- Hidden Bass/Treble inputs for backwards compatibility -->
+                                <div style="display: none;">
+                                    <span id="eq-bass-val">0 дБ</span>
+                                    <input type="range" id="eq-bass" min="-12" max="12" step="1" value="0" />
+                                    <span id="eq-treble-val">0 дБ</span>
+                                    <input type="range" id="eq-treble" min="-12" max="12" step="1" value="0" />
+                                </div>
+
+                                <div class="quick-pose-group" style="flex-wrap: nowrap; padding: 6px 8px; gap: 5px;">
+                                    <span class="quick-bar-label">Характер:</span>
+                                    <button type="button" class="mini-pill" style="padding: 4px 8px; font-size: 11px;" data-eq-preset="natural">Обычный 1.0x</button>
+                                    <button type="button" class="mini-pill" style="padding: 4px 8px; font-size: 11px;" data-eq-preset="cute">Милый +4 пт</button>
+                                    <button type="button" class="mini-pill" style="padding: 4px 8px; font-size: 11px;" data-eq-preset="velvet">Мягкий -3 пт</button>
+                                    <button type="button" class="mini-pill" style="padding: 4px 8px; font-size: 11px;" data-eq-preset="crisp">Бодрый 1.12x</button>
+                                </div>
+
+                                <!-- ElevenLabs Settings in Compact Grid -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div class="field-box">
+                                        <label class="field-label" for="select-eleven-preset">Голос ElevenLabs</label>
+                                        <select class="ctrl-select" id="select-eleven-preset">
+                                            <option value="cgSgspJ2msm6clMCkdW9">Jessica (Живой женский)</option>
+                                            <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Нежный женский)</option>
+                                            <option value="pFZP5JQG7iQjIQuC4Bku">Lily (Бархатный женский)</option>
+                                            <option value="Xb7hH8MSUJpSbSDYk0k2">Alice (Уверенный женский)</option>
+                                            <option value="FGY2WhTYpPnrIDTdsKH5">Laura (Энергичный женский)</option>
+                                            <option value="XrExE9yKIg1WjnnlVkGX">Matilda (Тёплый женский)</option>
+                                            <option value="custom">Свой Voice ID</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field-box">
+                                        <label class="field-label" for="cfg-eleven-voice-id">ID Голоса (Voice ID)</label>
+                                        <input type="text" class="ctrl-input" id="cfg-eleven-voice-id" placeholder="cgSgspJ2msm6clMCkdW9" />
+                                    </div>
+                                </div>
+
+                                <div class="field-box">
+                                    <label class="field-label" for="cfg-eleven-key">ElevenLabs API Key (ключ сохраняется сразу при вводе)</label>
+                                    <input type="password" class="ctrl-input" id="cfg-eleven-key" placeholder="Вставьте ключ sk_... (если не указан, работает бесплатный нейроголос)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL 1: COMMAND CONFIRMATION WITH COUNTDOWN TIMER -->
+    <div class="cmd-modal-backdrop" id="cmd-confirm-modal">
+        <div class="confirm-modal-card">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #fbbf24;">
+                    Подтверждение действия
+                </span>
+                <span id="confirm-modal-countdown-text" style="font-family: monospace; font-size: 13px; font-weight: 700; color: #fb7185;">
+                    10.0 сек
+                </span>
+            </div>
+
+            <div>
+                <h3 id="confirm-modal-title" style="font-family: var(--font-display); font-size: 20px; color: var(--text-primary);">
+                    Выполнить команду?
+                </h3>
+                <p id="confirm-modal-steps" style="font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5;"></p>
+            </div>
+
+            <div class="confirm-timer-bar-wrap">
+                <div class="confirm-timer-bar-fill" id="confirm-modal-bar"></div>
+            </div>
+
+            <div class="field-row" style="justify-content: flex-end; gap: 10px;">
+                <button type="button" class="action-btn danger" id="btn-confirm-cancel" style="width: auto; padding: 0 20px;">
+                    Отменить
+                </button>
+                <button type="button" class="action-btn primary" id="btn-confirm-approve" style="width: auto; padding: 0 24px;">
+                    Выполнить сейчас
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: NEW MULTI-STEP COMMAND / SCENARIO BUILDER -->
+    <div class="cmd-modal-backdrop" id="new-cmd-modal">
+        <div class="new-cmd-modal-card">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h3 id="new-cmd-modal-title" style="font-family: var(--font-display); font-size: 19px; color: var(--text-primary);">
+                        Создать новую команду / сценарий
+                    </h3>
+                    <p style="font-size: 12px; color: var(--text-secondary);">
+                        Настройте ключевое слово, папку и цепочку действий (программы, сайты, громкость, макрос)
+                    </p>
+                </div>
+                <button type="button" class="icon-btn" id="btn-close-new-cmd-modal" style="width: 34px; height: 34px;">✕</button>
+            </div>
+
+            <div class="cmd-builder-grid">
+                <div class="field-box">
+                    <label class="field-label" for="modal-cmd-trigger">Ключевая фраза (триггер)</label>
+                    <input type="text" class="ctrl-input" id="modal-cmd-trigger" placeholder="Например: уютный вечер, доброе утро, стрим" />
+                </div>
+
+                <div class="field-box">
+                    <label class="field-label" for="modal-cmd-folder">Папка в древе команд</label>
+                    <input type="text" class="ctrl-input" id="modal-cmd-folder" list="folder-suggestions" placeholder="Например: Управление Chrome, Мои сценарии" value="Мои сценарии" />
+                    <datalist id="folder-suggestions">
+                        <option value="Мои сценарии"></option>
+                        <option value="Управление системой"></option>
+                        <option value="Управление Chrome"></option>
+                        <option value="Управление Spotify"></option>
+                        <option value="Управление Steam"></option>
+                        <option value="Управление Discord"></option>
+                        <option value="Управление OBS"></option>
+                        <option value="Adobe Photoshop"></option>
+                        <option value="Figma Design"></option>
+                        <option value="GitHub и VS Code"></option>
+                        <option value="Движения и позы 3D/Live2D"></option>
+                    </datalist>
+                </div>
+
+                <div class="field-box">
+                    <label class="field-label" for="modal-cmd-scope">Раздел</label>
+                    <select class="ctrl-select" id="modal-cmd-scope">
+                        <option value="pc">Управление ПК</option>
+                        <option value="avatar">Управление 3D Моделью</option>
+                        <option value="packs">Пакеты программ (Обучение Евы)</option>
+                    </select>
+                </div>
+
+                <div class="field-box">
+                    <label class="field-label" for="modal-cmd-response">Ответ Евы вслух</label>
+                    <input type="text" class="ctrl-input" id="modal-cmd-response" placeholder="Например: Запускаю ваш сценарий, господин!" />
+                </div>
+            </div>
+
+            <!-- Dynamic Action Steps List -->
+            <div class="field-box">
+                <div class="field-label">
+                    <span>Цепочка действий (выполняются по очереди):</span>
+                    <button type="button" class="mini-pill active" id="btn-add-step-row">+ Добавить шаг</button>
+                </div>
+                <div id="modal-steps-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 210px; overflow-y: auto; padding-right: 4px;"></div>
+            </div>
+
+            <!-- Optional Confirmation Popup Toggle -->
+            <div class="field-row" style="justify-content: space-between; padding: 10px 14px; border-radius: 10px; background: #0b0c10; border: 1px solid var(--border-subtle);">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-primary); cursor: pointer;">
+                    <input type="checkbox" id="modal-cmd-confirm-chk" style="accent-color: var(--accent); width: 16px; height: 16px;" />
+                    <span>Спрашивать подтверждение во всплывающем окне с таймером</span>
+                </label>
+                <div class="field-row" style="gap: 6px;">
+                    <span style="font-size: 11.5px; color: var(--text-muted);">Таймер (сек):</span>
+                    <input type="number" class="ctrl-input" id="modal-cmd-timeout" min="3" max="60" value="10" style="width: 68px; height: 32px; padding: 0 8px;" />
+                </div>
+            </div>
+
+            <div class="field-row" style="justify-content: flex-end; gap: 10px;">
+                <button type="button" class="action-btn" id="btn-cancel-new-cmd-modal" style="width: auto; padding: 0 18px;">
+                    Отмена
+                </button>
+                <button type="button" class="action-btn primary" id="btn-save-new-cmd-modal" style="width: auto; padding: 0 24px;">
+                    Сохранить команду
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script type="module" src="/static/control.js?v=20.0"></script>
+</body>
+</html>

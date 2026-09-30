@@ -1,0 +1,108 @@
+{
+    "assistant_name": "Ева",
+    "user_name": "Создатель",
+    "ai_mode": "conversational",
+    "project_github_url": "https://github.com/paraxyoz/EVA-AI-Assistant",
+    "llm_provider": "ollama",
+    "providers": {
+        "ollama": {
+            "api_base": "http://localhost:11434/v1",
+            "api_key": "ollama",
+            "model": "qwen3.5:9b",
+            "vision_model": "qwen3.5:9b",
+            "temperature": 0.7,
+            "max_tokens": 2048
+        },
+        "eva_free": {
+            "api_base": "https://text.pollinations.ai/openai",
+            "api_key": "not-needed",
+            "model": "openai",
+            "vision_model": "openai",
+            "temperature": 0.7,
+            "max_tokens": 1024
+        },
+        "lm_studio": {
+            "api_base": "http://localhost:1234/v1",
+            "api_key": "not-needed",
+            "model": "qwen2.5-7b-instruct",
+            "vision_model": "qwen2-vl-7b-instruct",
+            "temperature": 0.7,
+            "max_tokens": 2048
+        },
+        "gemini": {
+            "api_base": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "api_key": "YOUR_GEMINI_API_KEY",
+            "model": "gemini-2.5-flash",
+            "vision_model": "gemini-2.5-flash",
+            "temperature": 0.5,
+            "max_tokens": 1024
+        },
+        "groq": {
+            "api_base": "https://api.groq.com/openai/v1",
+            "api_key": "YOUR_GROQ_API_KEY",
+            "model": "llama-3.3-70b-versatile",
+            "vision_model": "llama-3.3-70b-versatile",
+            "temperature": 0.7,
+            "max_tokens": 2048
+        },
+        "openrouter": {
+            "api_base": "https://openrouter.ai/api/v1",
+            "api_key": "YOUR_OPENROUTER_API_KEY",
+            "model": "google/gemini-2.0-flash-001",
+            "vision_model": "google/gemini-2.0-flash-001",
+            "temperature": 0.7,
+            "max_tokens": 2048
+        },
+        "openai": {
+            "api_base": "https://api.openai.com/v1",
+            "api_key": "YOUR_OPENAI_API_KEY",
+            "model": "gpt-4o-mini",
+            "vision_model": "gpt-4o-mini",
+            "temperature": 0.7,
+            "max_tokens": 2048
+        }
+    },
+    "audio": {
+        "enabled": true,
+        "input_device_index": -1,
+        "output_device": "auto",
+        "mic_muted": false,
+        "wake_word": "ева",
+        "wake_word_aliases": [
+            "ева",
+            "джарвис",
+            "jarvis",
+            "ассистент",
+            "компьютер",
+            "слушай"
+        ],
+        "wake_word_enabled": true,
+        "vad_silence_threshold": 0.8,
+        "whisper_model": "base",
+        "whisper_device": "cpu",
+        "whisper_language": "ru",
+        "voice_profile": "aoede",
+        "play_response_audio": true,
+        "eq": {
+            "pitch": 0,
+            "speed": 1.0,
+            "bass": 0,
+            "treble": 0,
+            "volume": 100
+        },
+        "elevenlabs": {
+            "api_key": "",
+            "voice_id": "cgSgspJ2msm6clMCkdW9",
+            "model_id": "eleven_turbo_v2_5",
+            "stability": 0.5,
+            "similarity_boost": 0.8
+        }
+    },
+    "vrm": {
+        "active_model": "sample_vrm1.vrm"
+    },
+    "avatar": {
+        "show_on_desktop": true,
+        "always_on_top": true
+    }
+}

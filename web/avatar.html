@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA AI — 3D & Live2D Аватар</title>
+    <!-- Live2D Cubism 2.1 & Cubism 4 Runtimes + PixiJS -->
+    <script src="/static/vendor/live2d/pixi.min.js"></script>
+    <script src="/static/vendor/live2d/live2dcubismcore.min.js"></script>
+    <script src="/static/vendor/live2d/live2d.min.js"></script>
+    <script src="/static/vendor/live2d/pixi-live2d-display.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "/static/vendor/three/three.module.js",
+            "three/addons/loaders/GLTFLoader.js": "/static/vendor/three/GLTFLoader.js",
+            "three/addons/controls/OrbitControls.js": "/static/vendor/three/OrbitControls.js",
+            "three/addons/utils/BufferGeometryUtils.js": "/static/vendor/utils/BufferGeometryUtils.js",
+            "@pixiv/three-vrm": "/static/vendor/vrm/three-vrm.module.min.js"
+        }
+    }
+    </script>
+    <style>
+        @font-face {
+            font-family: 'Tovar';
+            src: url('/static/fonts/Tovar.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: transparent !important;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #f3f4f8;
+        }
+
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent !important;
+            z-index: 1;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* Floating Spatial Glass Dock — appears on hover or while recording */
+        .avatar-hud {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 10px;
+            background: rgba(14, 16, 23, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 99px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        body:hover .avatar-hud,
+        .avatar-hud.recording {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .hud-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #181c28;
+            color: #d4d4d8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .hud-btn:hover {
+            background: #252b3d;
+            color: #ffffff;
+            border-color: rgba(99, 102, 241, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .hud-btn.active {
+            background: #f43f5e;
+            color: #ffffff;
+            border-color: #fda4af;
+            box-shadow: 0 0 14px rgba(244, 63, 94, 0.5);
+        }
+
+        .hud-btn svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            stroke-width: 1.85;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .hud-status {
+            font-family: 'Tovar', 'Segoe UI', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.07em;
+            color: #a5b4fc;
+            padding: 0 6px;
+            text-transform: uppercase;
+        }
+
+        #visualizer-canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <canvas id="visualizer-canvas" width="64" height="16"></canvas>
+
+    <!-- Spatial Hover Dock -->
+    <div class="avatar-hud" id="avatar-hud">
+        <button class="hud-btn" id="btn-mic" title="Голосовой ввод">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+            </svg>
+        </button>
+
+        <button class="hud-btn" id="btn-cam-reset" title="Выровнять ракурс камеры">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+            </svg>
+        </button>
+
+        <span class="hud-status" id="hud-status">EVA</span>
+
+        <button class="hud-btn" id="btn-stop-speech-hud" style="display: none;" title="Остановить речь">
+            <svg viewBox="0 0 24 24">
+                <rect x="6" y="6" width="12" height="12" rx="2"/>
+            </svg>
+        </button>
+
+        <button class="hud-btn" id="btn-open-control" title="Открыть Панель управления">
+            <svg viewBox="0 0 24 24">
+                <line x1="4" y1="21" x2="4" y2="14"/>
+                <line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/>
+                <line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="2" y1="14" x2="6" y2="14"/>
+                <line x1="10" y1="8" x2="14" y2="8"/>
+                <line x1="18" y1="16" x2="22" y2="16"/>
+            </svg>
+        </button>
+    </div>
+
+    <script type="module">
+        import { VRMViewer } from '/static/vrm_viewer.js?v=13.0';
+        import { AudioSyncEngine } from '/static/audio_sync.js?v=13.0';
+
+        const container = document.getElementById('canvas-container');
+        const visCanvas = document.getElementById('visualizer-canvas');
+        const statusEl = document.getElementById('hud-status');
+        const micBtn = document.getElementById('btn-mic');
+        const stopBtn = document.getElementById('btn-stop-speech-hud');
+        const hudEl = document.getElementById('avatar-hud');
+
+        const viewer = new VRMViewer(container);
+        const audioSync = new AudioSyncEngine(viewer, visCanvas);
+        window.evaViewer = viewer;
+
+        let activeModel = 'sample_vrm1.vrm';
+        viewer.loadModel(`/models/${activeModel}?v=${Date.now()}`).catch(() => {
+            viewer.loadModel(`/models/alicia.vrm?v=${Date.now()}`).catch(console.error);
+        });
+
+        let ws = null;
+        function connectWS() {
+            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'init') {
+                        if (data.voice_eq) audioSync.setEqualizer(data.voice_eq);
+                        if (data.active_model && data.active_model !== activeModel) {
+                            activeModel = data.active_model;
+                            viewer.loadModel(`/models/${activeModel}?v=${Date.now()}`).catch(console.error);
+                        }
+                    } else if (data.type === 'voice_eq_changed' && data.eq) {
+                        audioSync.setEqualizer(data.eq);
+                    } else if (data.type === 'model_changed' && data.model_name) {
+                        activeModel = data.model_name;
+                        viewer.loadModel(`/models/${activeModel}?v=${Date.now()}`).catch(console.error);
+                    } else if (data.type === 'avatar_action') {
+                        if (data.pose) viewer.setPose(data.pose);
+                        if (data.emotion) viewer.setEmotion(data.emotion);
+                        if (data.camera) viewer.setCameraPreset(data.camera);
+                    } else if (data.type === 'state') {
+                        statusEl.textContent = data.state === 'IDLE' ? 'EVA' : (data.state === 'LISTENING' ? 'LISTEN' : data.state);
+                        if (data.state === 'LISTENING') {
+                            micBtn.classList.add('active');
+                            hudEl.classList.add('recording');
+                        } else if (data.state === 'IDLE' || data.state === 'THINKING') {
+                            micBtn.classList.remove('active');
+                            hudEl.classList.remove('recording');
+                        }
+                    } else if (data.type === 'mic_state') {
+                        const active = Boolean(data.active);
+                        if (active && audioSync.isPlaying) audioSync.stop();
+                        micBtn.classList.toggle('active', active);
+                        hudEl.classList.toggle('recording', active);
+                        statusEl.textContent = active ? 'LISTEN' : 'EVA';
+                    } else if (data.type === 'audio_playback' && data.audio_base64) {
+                        statusEl.textContent = 'VOICE';
+                        stopBtn.style.display = 'flex';
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'speech_started' }));
+                        }
+                        audioSync.playAudioBase64(data.audio_base64, () => {
+                            statusEl.textContent = 'EVA';
+                            stopBtn.style.display = 'none';
+                            viewer.setEmotion('neutral');
+                            if (!data.played_by_backend && ws && ws.readyState === WebSocket.OPEN) {
+                                ws.send(JSON.stringify({ type: 'speech_stopped' }));
+                            }
+                        }, data.voice_eq || null, Boolean(data.played_by_backend));
+                    } else if (data.type === 'speech_stopped') {
+                        audioSync.stop();
+                        stopBtn.style.display = 'none';
+                        statusEl.textContent = 'EVA';
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
+            ws.onerror = () => {
+                try { ws.close(); } catch (_) {}
+            };
+
+            ws.onclose = () => setTimeout(connectWS, 1200);
+        }
+        connectWS();
+        setInterval(() => {
+            if (!ws || ws.readyState === WebSocket.CLOSED) {
+                connectWS();
+            } else if (ws.readyState === WebSocket.OPEN) {
+                try { ws.send(JSON.stringify({ type: 'ping' })); } catch (_) {}
+            }
+        }, 3000);
+
+        document.getElementById('btn-cam-reset').addEventListener('click', () => {
+            viewer.setCameraPreset('waist');
+        });
+
+        stopBtn.addEventListener('click', async () => {
+            audioSync.stop();
+            stopBtn.style.display = 'none';
+            try {
+                await fetch('/api/speech/stop', { method: 'POST' });
+            } catch (_) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'stop_speaking' }));
+                }
+            }
+        });
+
+        document.getElementById('btn-open-control').addEventListener('click', async () => {
+            try {
+                await fetch('/api/window/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'toggle_control' })
+                });
+            } catch (_) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'window_action', action: 'toggle_control' }));
+                }
+            }
+        });
+
+        micBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (audioSync.isPlaying) audioSync.stop();
+            try {
+                const res = await fetch('/api/mic/toggle', { method: 'POST' });
+                const data = await res.json();
+                if (data.success !== undefined) {
+                    const active = Boolean(data.active);
+                    micBtn.classList.toggle('active', active);
+                    hudEl.classList.toggle('recording', active);
+                    statusEl.textContent = active ? 'LISTEN' : 'EVA';
+                }
+            } catch (_) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'mic_toggle' }));
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# ============================================================================
+# EVA AI & J.A.R.V.I.S. — Git Ignore Rules
+# ============================================================================
+
+# Python bytecode & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+
+# User secrets, personal config, local SQLite memory & audio cache
+data/config.json
+data/memory.db
+data/memory.db-journal
+data/memory.db-wal
+data/memory.db-shm
+data/voice_cache/
+data/commands_state.json
+data/custom_commands.json
+data/macros/
+.env
+*.env
+
+# Heavy / unused local artifacts & Live2D editor project sources (.cmo3 / .can3)
+data/v4_ru.pt
+data/archive_nsfw/
+data/models/6250222697884374153.vrm
+*.cmo3
+*.can3
+rebuild_torso_vrm.py
+web/skin_nsfw.png
+web/skin_underwear.png
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
